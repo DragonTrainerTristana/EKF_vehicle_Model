@@ -20,6 +20,8 @@ for i = 1 : size(data, 1)
     end
 end
 
+%version
+
 for i = 1 : size(Xsaved, 1) - 1
     [pos_x, pos_y, nothing] = SystemEKF(Xsaved, i);
 
