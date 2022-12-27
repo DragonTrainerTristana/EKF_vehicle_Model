@@ -94,7 +94,7 @@ err = immse(realData, predictedData)
 
 function [pos_x, pos_y, nothing] = SystemEKF(Xsaved, number)
 
-persistent A Q R
+persistent H Q R
 persistent x P
 persistent firstRun
 
@@ -109,16 +109,20 @@ if isempty(firstRun)
     Q = [0.001 0 0;
         0 0.001 0;
         0 0 0.01];
-
+    H = [1,1,0];
     R = 10;
     
     % row 1은 Pos_x, row 2는 pos_y, row 3는 distance가 되어야함
     x = [11116.09,5811.57,distance]'; % 임의 초깃값
-    P = 100 * eye(3);
+    P = 10 * eye(3);
 
     firstRun = 1;
+    pos_x = x(1);
+    pos_y = x(2);
+    nothing = x(3);
 end
 
+if firstRun == 1
 A = Ajacob(Xsaved,number);
 x(1,3) = distance;
 
@@ -130,7 +134,7 @@ x(1,3) = distance;
     z(1,2) = Xsaved(number + 1, 4);% pos_y 관측값
     z(1,3) = 0;
 
-    H = [0,0,1];
+   
 
     K = Pp*H'*inv(H*Pp*H' + R);
 
@@ -140,7 +144,7 @@ x(1,3) = distance;
     pos_x = x(1);
     pos_y = x(2);
     nothing = x(3);
-
+end
 end
 
 function A = Ajacob(Xsaved, number)
@@ -156,6 +160,6 @@ A(2,2) = 1;
 A(2,3) = speed*cos(theta);
 A(3,1) = 0;
 A(3,2) = 0;
-A(3,3) = 1;
+A(3,3) = 0;
 
 end
