@@ -1,9 +1,9 @@
 %data = readmatrix("mobility_0.csv")
-
+%load Xsaved.mat
 
 count = 59900;
 i_count = 1;
-csv_number = 3;
+csv_number = 13;
 
 Xsaved = zeros(count, 6);
 realData = zeros(count, 2);
@@ -19,6 +19,8 @@ end
 i_count = 1;
 for i = 1 : count
     
+    
+
     if i == 1
         predictedData(i, 1) = Xsaved(i, 3);
         predictedData(i, 2) = Xsaved(i, 4);
@@ -39,9 +41,11 @@ end
 
 subplot(2,1,1)
 plot(predictedData(:,1),predictedData(:,2))
+title('predictedData')
 
 subplot(2,1,2)
 plot(realData(:,1), realData(:,2))
+title('realData')
 
 
 err = immse(realData, predictedData)
@@ -64,7 +68,7 @@ if isempty(firstRun)
     Q = [0.001 0 0;
         0 0.001 0;
         0 0 0.01];
-    H = [1 0 0 ; 0 1 0 ; 0 0 0];
+
     R = 100;
     P = 1*eye(3);
 
@@ -80,28 +84,33 @@ if isempty(firstRun)
     firstRun = 1;   
 end
 
-A = Ajacob(Xsaved, number);
-
-
 if firstRun == 1
+
+    A = Ajacob(Xsaved, number);
+    %H = Hjacob(Xsaved, number, x ,distance);
+    
     arbiNum = number -1;
 
-    
-    x(1, 1) = Xsaved(arbiNum, 3) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
-    x(2, 1) = Xsaved(arbiNum, 4) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
+    a = randn
 
-    %x(1, 1) = predictedData(arbiNum, 1) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
-    %x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
-    x(3, 1) = time*Xsaved(number-1, 6);
+    if a > 3
+        x(1, 1) = Xsaved(arbiNum, 3) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
+        x(2, 1) = Xsaved(arbiNum, 4) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
+    end
+    if a <= 3
+        x(1, 1) = predictedData(arbiNum, 1) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
+        x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
+        x(3, 1) = time*Xsaved(number-1, 6);
+    end
     distance = x(3);
     %H = Hjacob(Xsaved, number, x, distance);
    
     %xp = A*x;
    
-    Pp = A*P*A' + Q;
+    %Pp = A*P*A' + Q;
     %K = Pp*H'*inv(H*Pp*H' + R);
-    xp = x;
-    %x = xp + K*(z-xp);  
+    %xp = x;
+    %x = xp + K*(z-H*xp);  
     %x = xp;
     %P = Pp - K*H*Pp;
 
