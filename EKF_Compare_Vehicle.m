@@ -1,4 +1,5 @@
-data = readmatrix("mobility_0.csv")
+%data = readmatrix("mobility_0.csv")
+
 
 count = 59900;
 i_count = 1;
@@ -25,7 +26,7 @@ for i = 1 : count
         realData(i, 2) = Xsaved(i,4);
     end
     if i ~= 1
-        [pos_x, pos_y, distance] = SystemEKF(Xsaved, i);
+        [pos_x, pos_y, distance] = SystemEKF(Xsaved,predictedData, i);
         predictedData(i, 1) = pos_x;
         predictedData(i, 2) = pos_y;
         realData(i, 1) = Xsaved(i,3);
@@ -43,13 +44,14 @@ subplot(2,1,2)
 plot(realData(:,1), realData(:,2))
 
 
-function [pos_x, pos_y, distance] = SystemEKF(Xsaved, number)
+err = immse(realData, predictedData)
+
+function [pos_x, pos_y, distance] = SystemEKF(Xsaved,predictedData,number)
 
 persistent H Q R
 persistent x z P
 persistent firstRun
 persistent time
-persistent perCount
 
 z = zeros(1, 3);
 z(1,1) = Xsaved(number, 3);
@@ -58,13 +60,12 @@ z(1,3) = 0;
 
 
 if isempty(firstRun)
-    perCount = 1;
     time = 0.01;
     Q = [0.001 0 0;
         0 0.001 0;
         0 0 0.01];
     H = [1 0 0 ; 0 1 0 ; 0 0 0];
-    R = 1;
+    R = 100;
     P = 1*eye(3);
 
     x = zeros(3,1);
@@ -76,25 +77,31 @@ if isempty(firstRun)
     pos_y = x(2);
     distance = x(3);
 
-    firstRun = 2;   
+    firstRun = 1;   
 end
 
 A = Ajacob(Xsaved, number);
 
+
 if firstRun == 1
-    perCount = perCount + 1;
     arbiNum = number -1;
 
     
     x(1, 1) = Xsaved(arbiNum, 3) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
     x(2, 1) = Xsaved(arbiNum, 4) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
-    x(3, 1) = time*Xsaved(number, 6);
+
+    %x(1, 1) = predictedData(arbiNum, 1) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
+    %x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
+    x(3, 1) = time*Xsaved(number-1, 6);
+    distance = x(3);
+    %H = Hjacob(Xsaved, number, x, distance);
    
     %xp = A*x;
    
     Pp = A*P*A' + Q;
-    K = Pp*H'*inv(H*Pp*H' + R);
-    %x = xp + K*(z- H*xp);
+    %K = Pp*H'*inv(H*Pp*H' + R);
+    xp = x;
+    %x = xp + K*(z-xp);  
     %x = xp;
     %P = Pp - K*H*Pp;
 
@@ -103,15 +110,6 @@ if firstRun == 1
     distance = x(3);
 
 end
-
-if perCount == 1
-    pos_x;
-end
-if perCount == 2
-    pos_x;
-end
-
-firstRun =1;
 end
 
 function A = Ajacob(Xsaved, number)
@@ -125,7 +123,8 @@ function A = Ajacob(Xsaved, number)
     speed = Xsaved(number-1, 6);
     A(1,1) = 1;
     A(1,2) = 0;
-    %A(1,3) = cos(theta);
+    %A(1,3) = cos(thet
+    % a);
     A(1,3) = -distance*sin(theta);
 
     A(2,1) = 0;
@@ -135,5 +134,18 @@ function A = Ajacob(Xsaved, number)
     A(3,1) = 0;
     A(3,2) = 0;
     A(3,3) = 1;
+
+end
+
+function H = Hjacob(Xsaved, number,x, distance)
+    theta_check = Xsaved(number, 5);
+
+    H1_dx = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H1_dy = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
+
+    H2_dx = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H2_dy = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
+
+    H = [H1_dx H1_dy 0 ; H2_dx H2_dy 0];
 
 end
