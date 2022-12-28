@@ -1,4 +1,4 @@
-%data = readmatrix("mobility_0.csv")ds
+%data = readmatrix("mobility_0.csv")
 count = 0;
 i_count = 1;
 k_count = 1;
