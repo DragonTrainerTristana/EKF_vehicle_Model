@@ -1,5 +1,5 @@
 %data = readmatrix("mobility_0.csv")
-%load Xsaved.mat
+load Xsaved.mat
 
 count = 59900;
 i_count = 1;
@@ -36,7 +36,6 @@ for i = 1 : count
     end
 
 end
-
 
 
 subplot(2,1,1)
