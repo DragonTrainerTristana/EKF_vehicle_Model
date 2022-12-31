@@ -54,7 +54,9 @@ function [pos_x, pos_y, distance] = SystemEKF(Xsaved,predictedData,number)
 persistent H Q R
 persistent x z P
 persistent firstRun
+persistent innov
 persistent time
+persistent count
 
 z = zeros(1, 3);
 z(1,1) = Xsaved(number, 3);
@@ -63,13 +65,15 @@ z(1,3) = 0;
 
 
 if isempty(firstRun)
+    count = 0;
+    innov = zeros(59900,1);
     time = 0.01;
     Q = [0.001 0 0;
         0 0.001 0;
         0 0 0.01];
 
-    R = 100;
-    P = 1*eye(3);
+    R = 10;
+    P = eye(3);
 
     x = zeros(3,1);
     x(1,1) = Xsaved(1, 3);
@@ -81,17 +85,21 @@ if isempty(firstRun)
     distance = x(3);
 
     firstRun = 1;   
+    count = count + 1;
 end
 
-if firstRun == 1
+    if firstRun == 1
+    
+    
+    count = count + 1;
 
     A = Ajacob(Xsaved, number);
     %H = Hjacob(Xsaved, number, x ,distance);
     
     arbiNum = number -1;
 
-    a = randn
-
+    a = randn;
+%{
     if a > 3
         x(1, 1) = Xsaved(arbiNum, 3) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
         x(2, 1) = Xsaved(arbiNum, 4) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
@@ -101,23 +109,26 @@ if firstRun == 1
         x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
         x(3, 1) = time*Xsaved(number-1, 6);
     end
+%}
     distance = x(3);
-    %H = Hjacob(Xsaved, number, x, distance);
+    H = Hjacob(Xsaved, number, x, distance);
    
     %xp = A*x;
    
-    %Pp = A*P*A' + Q;
-    %K = Pp*H'*inv(H*Pp*H' + R);
-    %xp = x;
-    %x = xp + K*(z-H*xp);  
+    Pp = A*P*A' + Q;
+    K = Pp*H'*inv(H*Pp*H' + R);
+    xp = x;
+    innov = K*(z-H*xp);
+    x = xp + K*(z-H*xp);  
     %x = xp;
-    %P = Pp - K*H*Pp;
+    P = Pp - K*H*Pp;
 
     pos_x = x(1);
     pos_y = x(2);
     distance = x(3);
+    x
 
-end
+    end
 end
 
 function A = Ajacob(Xsaved, number)
@@ -141,11 +152,12 @@ function A = Ajacob(Xsaved, number)
     A(2,3) = distance*cos(theta);
     A(3,1) = 0;
     A(3,2) = 0;
-    A(3,3) = 1;
+    A(3,3) = 0;
 
 end
 
 function H = Hjacob(Xsaved, number,x, distance)
+
     theta_check = Xsaved(number, 5);
 
     H1_dx = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
@@ -154,6 +166,6 @@ function H = Hjacob(Xsaved, number,x, distance)
     H2_dx = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
     H2_dy = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
 
-    H = [H1_dx H1_dy 0 ; H2_dx H2_dy 0];
+    H = [H1_dx H1_dy 0 ; H2_dx H2_dy 0; 0 0 0];
 
 end
