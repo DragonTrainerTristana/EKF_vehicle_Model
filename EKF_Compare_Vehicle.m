@@ -55,11 +55,12 @@ persistent H Q R
 persistent x z P
 persistent firstRun
 persistent time
+persistent l
 
-z = zeros(1, 3);
+z = zeros(3, 1);
 z(1,1) = Xsaved(number, 3);
-z(1,2) = Xsaved(number, 4);
-z(1,3) = 0;
+z(2,1) = Xsaved(number, 4);
+z(3,1) = 0;
 
 
 if isempty(firstRun)
@@ -68,8 +69,10 @@ if isempty(firstRun)
         0 0.001 0;
         0 0 0.01];
 
-    R = 100;
+    R = eye(2,2);
     P = 1*eye(3);
+    l = [1000,1000];
+    
 
     x = zeros(3,1);
     x(1,1) = Xsaved(1, 3);
@@ -90,32 +93,43 @@ if firstRun == 1
     
     arbiNum = number -1;
 
-    a = randn
+    a = randn;
 
+    %{
     if a > 3
         x(1, 1) = Xsaved(arbiNum, 3) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
         x(2, 1) = Xsaved(arbiNum, 4) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
     end
     if a <= 3
-        x(1, 1) = predictedData(arbiNum, 1) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
-        x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
-        x(3, 1) = time*Xsaved(number-1, 6);
+        
     end
-    distance = x(3);
-    %H = Hjacob(Xsaved, number, x, distance);
+    %}
+    distance = 0.01*Xsaved(arbiNum,6);
+    x(1, 1) = predictedData(arbiNum, 1) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
+    x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
+    x(3, 1) = time*Xsaved(number-1, 6);
+    H = Hjacob(Xsaved, number, x, distance,l);
    
     %xp = A*x;
    
-    %Pp = A*P*A' + Q;
-    %K = Pp*H'*inv(H*Pp*H' + R);
-    %xp = x;
-    %x = xp + K*(z-H*xp);  
+    Pp = A*P*A' + Q;
+    K = Pp*H'*inv(H*Pp*H' + R);
+    K(3,:) = [];
+    
+    z(3,:) = [];
+    xp = x;
+    x(3,:) = [];
+    x
+    x = x + K*(z-H*xp);  
     %x = xp;
-    %P = Pp - K*H*Pp;
+    KH = K*H;
+    KH(3, :) = [0,0,0];
+    P = Pp - KH*Pp;
+   
 
     pos_x = x(1);
     pos_y = x(2);
-    distance = x(3);
+    distance = 0;
 
 end
 end
@@ -145,15 +159,17 @@ function A = Ajacob(Xsaved, number)
 
 end
 
-function H = Hjacob(Xsaved, number,x, distance)
+function H = Hjacob(Xsaved, number,x, distance,l)
     theta_check = Xsaved(number, 5);
 
-    H1_dx = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-    H1_dy = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-
-    H2_dx = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-    H2_dy = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-
-    H = [H1_dx H1_dy 0 ; H2_dx H2_dy 0];
+    H1_dx = -(l(1,1) - x(1) - distance*cos(theta_check))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H1_dy = -(l(1,2) - x(2) - distance*sin(theta_check))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    dg1_dtheta = distance*(sin(theta_check)*(l(1,1) - x(1) - distance*cos(theta_check)) - cos(theta_check)*(l(1,2) - x(2) - distance*sin(theta_check)))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2)^(1/2);
+            
+    H2_dx = -(l(1,2) - x(2) - distance*sin(theta_check))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H2_dy = -(l(1,1) - x(1) - distance*cos(theta_check))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    dg2_dtheta = -distance*sin(theta_check)*(l(1,2) - x(2) - distance*sin(theta_check))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2) - distance*cos(theta_check)*(l(1,1) - x(1) - distance*cos(theta_check))/((l(1,1) - x(1) - distance*cos(theta_check))^2 + (l(1,2) - x(2) - distance*sin(theta_check))^2) - 1;
+      
+    H = [H1_dx H1_dy dg1_dtheta ; H2_dx H2_dy dg2_dtheta];
 
 end
