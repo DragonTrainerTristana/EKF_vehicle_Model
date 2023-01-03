@@ -65,15 +65,17 @@ z(2,1) = Xsaved(number, 4);
 
 
 if isempty(firstRun)
+    var = 0.456;
     numcount = 1;
     innov = zeros(59900,3);
     time = 0.01;
     Q = [0.001 0 0;
         0 0.001 0;
         0 0 0.01];
+    Q = Q * var;
 
-    R = 10*eye(3);
-    P = eye(3);
+    R = 100*eye(3);
+    P = diag([1,1,0.1]);
 
     x = zeros(2,1);
     x(1,1) = Xsaved(1, 3);
@@ -95,19 +97,13 @@ end
     arbiNum = number -1;
 
     a = randn;
-%{
-    if a > 3
-        x(1, 1) = Xsaved(arbiNum, 3) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
-        x(2, 1) = Xsaved(arbiNum, 4) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
-    end
-    if a <= 3
-        =
-    end
-%}
+
     x = zeros(3,1);
     x(1, 1) = predictedData(arbiNum, 1) + time*Xsaved(arbiNum, 6)*cos(Xsaved(arbiNum, 5));
     x(2, 1) = predictedData(arbiNum, 2) + time*Xsaved(arbiNum, 6)*sin(Xsaved(arbiNum, 5));
     x(3,1) = 0;
+
+    % x(t+1) = x(t) + distance*cos(theta);
     distance = time*Xsaved(arbiNum,6);
     A = Ajacob(Xsaved, number);
     %H = Hjacob(Xsaved, number, x, distance);
@@ -117,7 +113,7 @@ end
     
     %a = H*Pp*H' + R
     Pp = A*P*A' + Q;
-    K = Pp*H'*inv(H*Pp*H' + R)
+    K = Pp*H'*inv(H*Pp*H' + R);
     
     %xp =x;
    
