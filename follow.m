@@ -11,7 +11,7 @@ for i = 1 : size(data, 1)
 end
 
 
-T = 0.01; % Sampling period (s)
+T = 0.01; % Sampling period (s),
 K = 59900; % Data Length
 r_max = 1; % Threshold
 
