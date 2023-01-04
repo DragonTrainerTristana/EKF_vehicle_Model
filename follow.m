@@ -10,6 +10,7 @@ for i = 1 : size(data, 1)
     end
 end
 
+% b = randn(1,3); <- 노이즈 생성기
 
 T = 0.01; % Sampling period (s),
 K = 59900; % Data Length

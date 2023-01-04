@@ -1,7 +1,5 @@
-K = 100;
-count = 0;
+clc
 
-for k = 2:1:K 
-    k
+a = [1,2,3]; 
 
-end
+b = normrnd(0,1)
