@@ -44,10 +44,22 @@ for i = 1 : count
     end
 
     if i ~= 1 % iterate num of count
-    
+        [pos_x, pos_y, distance] = SystemEKF(mobilityArray,observationArray,predictedData, i);
+        predictedData(i, 1) = pos_x;
+        predictedData(i, 2) = pos_y;
+        realData(i, 1) = mobilityArray(i,3);
+        realData(i, 2) = mobilityArray(i,4);
     end
 
 end
+
+subplot(2,1,1)
+plot(predictedData(:,1),predictedData(:,2))
+title('predictedData')
+
+subplot(2,1,2)
+plot(realData(:,1), realData(:,2))
+title('realData')
 
 function [pos_x, pos_y, distance] = SystemEKF(mobilityArray,observationArray,predictedData,num)
 
@@ -61,8 +73,14 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
 
     if isempty(firstRun)
         
+        cov_v = 0.456;
+        cov_a = 0.378;
+        cov_r = 0.213;
+        cov_a2 = 0.215;
+
         P = diag([1,1,0.1]);
         Q = zeros(3,3);
+
         R = zeros(2,2);
 
         x = zeros(3,1);
@@ -85,30 +103,37 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         arbiNum = num - 1;
 
         %-- Mobility Model Prediction(Estimation) Step
-        x(1, 1) = predictedData(arbiNum, 1) + time*mobilityArray(num, 6)*cos(mobilityArray(arbiNum, 5));
-        x(2, 1) = predictedData(arbiNum, 2) + time*mobilityArray(num, 6)*sin(mobilityArray(arbiNum, 5));
+        x(1, 1) = predictedData(arbiNum, 1) + time*mobilityArray(num, 6)*cos(mobilityArray(arbiNum, 5) * pi/180);
+        x(2, 1) = predictedData(arbiNum, 2) + time*mobilityArray(num, 6)*sin(mobilityArray(arbiNum, 5) * pi/180);
         x(3, 1) = 0;
         
+        a = time*mobilityArray(num, 6)*cos(mobilityArray(arbiNum, 5) * pi/180);
+        b = time*mobilityArray(num, 6)*sin(mobilityArray(arbiNum, 5) * pi/180);
 
         A = Ajacob(mobilityArray, num);
+        Q_q = [a, 0; b, 0; 0, 1];
+        Q = Q_q'*Q_q*[cov_v^2 0; 0 cov_a^2];
         Pp = A*P*A' + Q;
 
         %-- Observaton Model Correction Step
         H_x = observationArray(num,3); % position x
         H_y = observationArray(num,4); % position y
         relativeDis = sqrt((x(1,1) - H_x)^2 + (x(2,1) - H_y)^2);
-        relativeAng = atan2((X(2,1)-H_y)/(x(1,1)-H_y));
+        relativeAng = atan2((x(2,1)-H_y),(x(1,1)-H_y));
+        relativeAng = relativeAng * pi/180; 
 
-        H = Hjacob(Xsaved, number,x, distance);
+        H = Hjacob(H_x,H_y,mobilityArray, number,x, relativeDis);
 
         z(1 ,1) = (cov_r)^2*(cos(relativeAng))^2 + relativeDis^2*cov_a2^2*(sin(relativeAng))^2;
         z(2 ,1) = (cov_r)^2*(sin(relativeAng))^2 + relativeDis^2*cov_a2^2*(cos(relativeAng))^2;
         z(3, 1) = 0;
         
+        R = [cov_r^2 0; 0 cov_a2^2];
         K = Pp*H'*inv(H*Pp*H' + R);
          
         newX = x + K*(z - H*x); % Correction X
-        
+        P = Pp-K*H*Pp;
+
         pos_x = newX(1);
         pos_y = newX(2);  
         distance = relativeDis;
@@ -140,17 +165,17 @@ function A = Ajacob(mobilityArray, number)
 
 end
 
-function H = Hjacob(Xsaved, number,x, distance)
+function H = Hjacob(H_x,H_y,Xsaved, number,x, distance)
 
     theta_check = Xsaved(number, 5);
 
-    H1_dx = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-    H1_dy = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-    dg1_dtheta = distance*(sin(theta_check)*(Xsaved(number,3) - x(1) - distance*cos(theta_check)) - cos(theta_check)*(Xsaved(number,4) - x(2) - distance*sin(theta_check)))/((Xsaved(number, 3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H1_dx = -(H_x - x(1) - distance*cos(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H1_dy = -(H_y - x(2) - distance*sin(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
+    dg1_dtheta = distance*(sin(theta_check)*(H_x - x(1) - distance*cos(theta_check)) - cos(theta_check)*(H_y - x(2) - distance*sin(theta_check)))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
             
-    H2_dx = -(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-    H2_dy = -(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2)^(1/2);
-    dg2_dtheta = -distance*sin(theta_check)*(Xsaved(number,4) - x(2) - distance*sin(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2) - distance*cos(theta_check)*(Xsaved(number,3) - x(1) - distance*cos(theta_check))/((Xsaved(number,3) - x(1) - distance*cos(theta_check))^2 + (Xsaved(number,4) - x(2) - distance*sin(theta_check))^2) - 1;
+    H2_dx = -(H_y - x(2) - distance*sin(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
+    H2_dy = -(H_x - x(1) - distance*cos(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
+    dg2_dtheta = -distance*sin(theta_check)*(H_y - x(2) - distance*sin(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2) - distance*cos(theta_check)*(H_x - x(1) - distance*cos(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2) - 1;
             
     H = [H1_dx H1_dy dg1_dtheta ; H2_dx H2_dy dg2_dtheta];
 
