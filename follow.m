@@ -83,8 +83,8 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
 
         R = zeros(2,2);
 
-        x = zeros(3,1);
-        newX = zeros(3,1); 
+        x = zeros(2,1);
+        newX = zeros(2,1); 
         z = zeros(3,1);
         x(1,1) = mobilityArray(1, 3);
         x(2,1) = mobilityArray(1, 4);
@@ -106,13 +106,18 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         x(1, 1) = predictedData(arbiNum, 1) + time*mobilityArray(num, 6)*cos(mobilityArray(arbiNum, 5) * pi/180);
         x(2, 1) = predictedData(arbiNum, 2) + time*mobilityArray(num, 6)*sin(mobilityArray(arbiNum, 5) * pi/180);
         x(3, 1) = 0;
-        
-        a = time*mobilityArray(num, 6)*cos(mobilityArray(arbiNum, 5) * pi/180);
-        b = time*mobilityArray(num, 6)*sin(mobilityArray(arbiNum, 5) * pi/180);
+        xH = zeros(3,1);
+        xH(1,1) = predictedData(arbiNum, 1);
+        xH(2,1) = predictedData(arbiNum, 2);
+        xH(3,1) = 0;
+
+        a = cos(mobilityArray(arbiNum, 5) * pi/180);
+        b = sin(mobilityArray(arbiNum, 5) * pi/180);
 
         A = Ajacob(mobilityArray, num);
-        Q_q = [a, 0; b, 0; 0, 1];
-        Q = Q_q'*Q_q*[cov_v^2 0; 0 cov_a^2];
+        
+        Q = [time^2*a^2*cov_v^2 time^2*a*b*cov_v^2 0; time^2*a*b*cov_v^2 (time*b*cov_a)^2 0; 0 0 cov_a^2];
+
         Pp = A*P*A' + Q;
 
         %-- Observaton Model Correction Step
@@ -122,16 +127,20 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         relativeAng = atan2((x(2,1)-H_y),(x(1,1)-H_y));
         relativeAng = relativeAng * pi/180; 
 
-        H = Hjacob(H_x,H_y,mobilityArray, number,x, relativeDis);
+        H = Hjacob(H_x,H_y,mobilityArray, num,x, relativeDis);
 
         z(1 ,1) = (cov_r)^2*(cos(relativeAng))^2 + relativeDis^2*cov_a2^2*(sin(relativeAng))^2;
         z(2 ,1) = (cov_r)^2*(sin(relativeAng))^2 + relativeDis^2*cov_a2^2*(cos(relativeAng))^2;
-        z(3, 1) = 0;
+        %z(3, 1) = 0;
         
         R = [cov_r^2 0; 0 cov_a2^2];
         K = Pp*H'*inv(H*Pp*H' + R);
-         
-        newX = x + K*(z - H*x); % Correction X
+        xp = x;
+        HH = H*xH;
+        HHH = [HH(1,1);H(2,1);0];
+        xp(3,:) = [];
+        
+        newX = xp + K'*(z - HHH); % Correction X
         P = Pp-K*H*Pp;
 
         pos_x = newX(1);
