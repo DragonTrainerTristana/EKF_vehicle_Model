@@ -110,6 +110,10 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         xH(1,1) = predictedData(arbiNum, 1);
         xH(2,1) = predictedData(arbiNum, 2);
         xH(3,1) = 0;
+        oB = zeros(3,1);
+        oB(1,1) = observationArray(num,3);
+        oB(2,1) = observationArray(num,4);
+        oB(3,1) = 0;
 
         a = cos(mobilityArray(arbiNum, 5) * pi/180);
         b = sin(mobilityArray(arbiNum, 5) * pi/180);
@@ -123,16 +127,18 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         %-- Observaton Model Correction Step
         H_x = observationArray(num,3); % position x
         H_y = observationArray(num,4); % position y
-        relativeDis = sqrt((x(1,1) - H_x)^2 + (x(2,1) - H_y)^2);
-        relativeAng = atan2((H_y-x(2,1)),(H_x-x(1,1)));
+        relativeDis = sqrt((mobilityArray(num,3) - H_x)^2 + (mobilityArray(num,4) - H_y)^2);
+        relativeAng = atan2((mobilityArray(num,4) - H_y),(mobilityArray(num,3)));
         relativeAng = relativeAng * 180/pi; 
 
         H = Hjacob(H_x,H_y,mobilityArray, num,x, relativeDis);
 
-        z(1 ,1) = (cov_r)^2*(cos(relativeAng))^2 + relativeDis^2*cov_a2^2*(sin(relativeAng))^2;
-        z(2 ,1) = (cov_r)^2*(sin(relativeAng))^2 + relativeDis^2*cov_a2^2*(cos(relativeAng))^2;
+        %z(1 ,1) = (cov_r)^2*(cos(relativeAng))^2 + relativeDis^2*cov_a2^2*(sin(relativeAng))^2;
+        %z(2 ,1) = (cov_r)^2*(sin(relativeAng))^2 + relativeDis^2*cov_a2^2*(cos(relativeAng))^2;
         %z(3, 1) = 0;
         
+        z(1,1) = oB(1,1) +  relativeDis*cos(relativeAng);
+
         R = [cov_r^2 0; 0 cov_a2^2];
         K = Pp*H'*inv(H*Pp*H' + R);
         xp = x;
