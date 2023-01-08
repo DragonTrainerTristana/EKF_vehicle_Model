@@ -4,14 +4,20 @@ load Xsaved.mat
 i_count = 1;
 
 count = 59900; % 59900 rows per id
-mobilityNum = 15; % id num 13
+mobilityNum = 35; % id num 13
 observationNum = 14; % id num 14
 
 mobilityArray = zeros(count, 6);
 observationArray = zeros(count, 6);
 realData = zeros(count, 2); % mobility ID real Data
 predictedData = zeros(count ,2); % predicted by EKF
-combined_matrix = zeros(count,4);
+combined_matrix = zeros(count + 1,5);
+ 
+combined_matrix(1,1) = "id";
+combined_matrix(1,2) = "Et_x";
+combined_matrix(1,3) = "Et_y";
+combined_matrix(1,4) = "Gt_x";
+combined_matrix(1,5) = "Gt_y";
 
 for i = 1 : size(data, 1)
     if data(i, 2) == mobilityNum
@@ -38,13 +44,14 @@ for i = 1 : count
         % Initialize first point of mobility model
         predictedData(i, 1) = mobilityArray(i, 3);
         predictedData(i, 2) = mobilityArray(i, 4);
-        combined_matrix(i,1) = mobilityArray(i, 3);
-        combined_matrix(i,2) = mobilityArray(i, 4);
+        combined_matrix(i+1,1) = mobilityNum;
+        combined_matrix(i+1,2) = mobilityArray(i, 3);
+        combined_matrix(i+1,3) = mobilityArray(i, 4);
 
         realData(i, 1) = mobilityArray(i,3);
         realData(i, 2) = mobilityArray(i,4);
-        combined_matrix(i,3) = mobilityArray(i, 3);
-        combined_matrix(i,4) = mobilityArray(i, 4);
+        combined_matrix(i+1,4) = mobilityArray(i, 3);
+        combined_matrix(i+1,5) = mobilityArray(i, 4);
         
     end
 
@@ -52,16 +59,20 @@ for i = 1 : count
         [pos_x, pos_y, distance] = SystemEKF(mobilityArray,observationArray,predictedData, i);
         predictedData(i, 1) = pos_x;
         predictedData(i, 2) = pos_y;
-        combined_matrix(i,1) = mobilityArray(i, 3);
-        combined_matrix(i,2) = mobilityArray(i, 4);
+
+        combined_matrix(i+1,1) = mobilityNum;
+        combined_matrix(i+1,2) = pos_x;
+        combined_matrix(i+1,3) = pos_y;
 
         realData(i, 1) = mobilityArray(i,3);
         realData(i, 2) = mobilityArray(i,4);
-        combined_matrix(i,3) = mobilityArray(i, 3);
-        combined_matrix(i,4) = mobilityArray(i, 4);
+        combined_matrix(i+1,4) = realData(i, 1);
+        combined_matrix(i+1,5) = realData(i, 2);
     end
 
 end
+writematrix(combined_matrix,'mobility_ekf_9.csv');
+
 
 subplot(2,1,1)
 plot(predictedData(:,1),predictedData(:,2))
@@ -75,9 +86,6 @@ error = immse(predictedData,realData);
 error
 
 
-
-
-writematrix(predictedData,'test.csv');
 
 
 function [pos_x, pos_y, distance] = SystemEKF(mobilityArray,observationArray,predictedData,num)
@@ -164,7 +172,7 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         R = 100;
         %K = Pp*H'*inv(H*Pp*H' + R);
         K = Pp*G'*inv(G*Pp*G' + R);
-        K = K*0.0005
+        K = K*0.0004
         xp = x;
         HH = H*xH;
         HHH = [HH(1,1);H(2,1);0];

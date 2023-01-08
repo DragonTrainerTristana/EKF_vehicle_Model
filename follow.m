@@ -1,3 +1,5 @@
+clc
+clear
 load Xsaved.mat
 
 % Array count Data
