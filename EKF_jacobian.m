@@ -172,7 +172,7 @@ persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
         R = 100;
         %K = Pp*H'*inv(H*Pp*H' + R);
         K = Pp*G'*inv(G*Pp*G' + R);
-        K = K*0.0004
+        K = K*0.0004;
         xp = x;
         HH = H*xH;
         HHH = [HH(1,1);H(2,1);0];
