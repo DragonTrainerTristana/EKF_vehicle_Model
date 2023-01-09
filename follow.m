@@ -2,59 +2,156 @@ clc
 clear
 load Xsaved.mat
 
-% Array count Data
-i_count = 1;
 
 count = 59900; % 59900 rows per id
-mobilityNum = 13; % id num 13
+mobilityNum = 35; % id num 13
 observationNum = 14; % id num 14
 
-mobilityArray = zeros(count, 6);
-observationArray = zeros(count, 6);
-realData = zeros(count, 2); % mobility ID real Data
-predictedData = zeros(count ,2); % predicted by EKF
+ranNum = zeros(1,10);
 
-
-for i = 1 : size(data, 1)
-    if data(i, 2) == mobilityNum
-        mobilityArray(i_count, :) = data(i,:);
-        i_count = i_count + 1;
+% Generate Random Number from 1 to 504
+for i = 1 : 10
+    ranNum(1,i) = randi([1, 504]);
+    if(i ~= 1)
+        for k = 1 : i-1
+            if(ranNum(1,k) == ranNum(1,i))
+                i = i - 1; %removing duplicates
+            end
+        end
     end
 end
 
-i_count = 1; % initialize again
+%-----------
+mobNum = zeros(1, 10);
+for i = 1 : 10
+    mobNum(1, i) = ranNum(1,i);
+end
+
+%-----------
+mobilityArray1 = zeros(count, 6);
+mobilityArray2 = zeros(count, 6);
+mobilityArray3 = zeros(count, 6);
+mobilityArray4 = zeros(count, 6);
+mobilityArray5 = zeros(count, 6);
+mobilityArray6 = zeros(count, 6);
+mobilityArray7 = zeros(count, 6);
+mobilityArray8 = zeros(count, 6);
+mobilityArray9 = zeros(count, 6);
+mobilityArray10 = zeros(count, 6);
+
+%-----------
+predictedData = zeros(count ,20);
+realData = zeros(count ,20);
+mobCount = ones(1,10);
+
+preNum = 1;
+realNum = 1;
+%-----------
+
 
 for i = 1 : size(data, 1)
-    if data(i, 2) == observationNum
-        observationArray(i_count, :) = data(i,:);
-        i_count = i_count + 1;
+    if data(i, 2) == mobNum(1,1)
+        mobilityArray1(mobCount(1,1), :) = data(i,:);
+        mobCount(1,1) = mobCount(1,1) + 1;
     end
+    if data(i, 2) == mobNum(1,2)
+        mobilityArray2(mobCount(1,2), :) = data(i,:);
+        mobCount(1,2) = mobCount(1,2) + 1;
+    end
+    if data(i, 2) == mobNum(1,3)
+        mobilityArray3(mobCount(1,3), :) = data(i,:);
+        mobCount(1,3) = mobCount(1,3) + 1;
+    end
+    if data(i, 2) == mobNum(1,4)
+        mobilityArray4(mobCount(1,4), :) = data(i,:);
+        mobCount(1,4) = mobCount(1,4) + 1;
+    end
+    if data(i, 2) == mobNum(1,5)
+        mobilityArray5(mobCount(1,5), :) = data(i,:);
+        mobCount(1,5) = mobCount(1,5) + 1;
+    end
+    if data(i, 2) == mobNum(1,6)
+        mobilityArray6(mobCount(1,6), :) = data(i,:);
+        mobCount(1,6) = mobCount(1,6) + 1;
+    end
+    if data(i, 7) == mobNum(1,7)
+        mobilityArray7(mobCount(1,7), :) = data(i,:);
+        mobCount(1,7) = mobCount(1,7) + 1;
+    end
+    if data(i, 2) == mobNum(1,8)
+        mobilityArray8(mobCount(1,8), :) = data(i,:);
+        mobCount(1,8) = mobCount(1,8) + 1;
+    end
+    if data(i, 2) == mobNum(1,9)
+        mobilityArray9(mobCount(1,9), :) = data(i,:);
+        mobCount(1,9) = mobCount(1,9) + 1;
+    end
+    if data(i, 2) == mobNum(1,10)
+        mobilityArray10(mobCount(1,10), :) = data(i,:);
+        mobCount(1,10) = mobCount(1,10) + 1;
+    end
+end
+
+
+%----------- Kalman Filter Algorithm
+for i = 1 : 100 : count % count => 59900
+
+    realData(realNum,1) = mobilityArray1(i, 3);
+    realData(realNum,2) = mobilityArray1(i, 4);
+    
+    realData(realNum,3) = mobilityArray2(i, 3);
+    realData(realNum,4) = mobilityArray2(i, 4);
+
+    realData(realNum,5) = mobilityArray3(i, 3);
+    realData(realNum,6) = mobilityArray3(i, 4);
+
+    realData(realNum,7) = mobilityArray4(i, 3);
+    realData(realNum,8) = mobilityArray4(i, 4);
+
+    realData(realNum,9) = mobilityArray5(i, 3);
+    realData(realNum,10) = mobilityArray5(i, 4);
+
+    realData(realNum,11) = mobilityArray6(i, 3);
+    realData(realNum,12) = mobilityArray6(i, 4);
+    
+    realData(realNum,13) = mobilityArray7(i, 3);
+    realData(realNum,14) = mobilityArray7(i, 4);
+
+    realData(realNum,15) = mobilityArray8(i, 3);
+    realData(realNum,16) = mobilityArray8(i, 4);
+
+    realData(realNum,17) = mobilityArray9(i, 3);
+    realData(realNum,18) = mobilityArray9(i, 4);
+
+    realData(realNum,19) = mobilityArray10(i, 3);
+    realData(realNum,20) = mobilityArray10(i, 4);
+
+    
+    % gap of sequence time is 0.01, 100 gap is 1 so time is 1[s]
+    for k = 1 : 20
+
+        if i == 1
+            predictedData(preNum,k) = 100;
+        end
+
+        if(i ~= 1)
+            [pos_Data] = EKF(mobilityArray1, mobilityArray2,mobilityArray3,mobilityArray4,mobilityArray5,mobilityArray6,mobilityArray7,mobilityArray8,mobilityArray9,mobilityArray10,predictedData,preNum,realData);
+            predictedData(preNum,k) = pos_Data(k,1);
+        end
+    end
+    preNum = preNum + 1;
+    realNum = realNum + 1;
+   
+  
 end
 
 %-------------- Kalman Filter Algorithm
 
-for i = 1 : count
-    
-    if i == 1 % Initialize EKF HyperParameter
-    
-        % Initialize first point of mobility model
-        predictedData(i, 1) = mobilityArray(i, 3);
-        predictedData(i, 2) = mobilityArray(i, 4);
 
-        realData(i, 1) = mobilityArray(i,3);
-        realData(i, 2) = mobilityArray(i,4);
-    end
+%writematrix(combined_matrix,'mobility_ekf_9.csv');
+%writematrix
 
-    if i ~= 1 % iterate num of count
-        [pos_x, pos_y, distance] = SystemEKF(mobilityArray,observationArray,predictedData, i);
-        predictedData(i, 1) = pos_x;
-        predictedData(i, 2) = pos_y;
-        realData(i, 1) = mobilityArray(i,3);
-        realData(i, 2) = mobilityArray(i,4);
-    end
-
-end
-
+%{
 subplot(2,1,1)
 plot(predictedData(:,1),predictedData(:,2))
 title('predictedData')
@@ -63,94 +160,126 @@ subplot(2,1,2)
 plot(realData(:,1), realData(:,2))
 title('realData')
 
-function [pos_x, pos_y, distance] = SystemEKF(mobilityArray,observationArray,predictedData,num)
+error = immse(predictedData,realData);
+error
+%}
 
-persistent Q R P % covariance matrix
+
+function [pos_Data] = EKF(mobilityArray1, mobilityArray2,mobilityArray3,mobilityArray4,mobilityArray5,mobilityArray6,mobilityArray7,mobilityArray8,mobilityArray9,mobilityArray10,predictedData,preNum,realData)
+
+persistent time
 persistent firstRun
-persistent time;
-persistent x z newX;
+persistent Q P R
+persistent H
 persistent cov_v cov_a % covariance velocity & angle of mobility
 persistent cov_r cov_a2 % covariance relativeDistance & angle of observation
 
+if isempty(firstRun)
 
-    if isempty(firstRun)
-        
-        cov_v = 0.456;
-        cov_a = 0.378;
-        cov_r = 0.213;
-        cov_a2 = 0.215;
-
-        P = diag([1,1,0.1]);
-        Q = zeros(3,3);
-
-        R = zeros(2,2);
-
-        x = zeros(2,1);
-        newX = zeros(2,1); 
-        z = zeros(3,1);
-        x(1,1) = mobilityArray(1, 3);
-        x(2,1) = mobilityArray(1, 4);
-        x(3,1) = 0;
-
-        pos_x = x(1);
-        pos_y = x(2);
-        distance = 0;
-
-        time = 0.01;
-        firstRun = 1;
-    end
-
-    if firstRun == 1
+    time = 1;
+    firstRun = 1;
+    H = diag([1,1,1]);
+    P = diag([1,1,0.1]);
+    cov_v = 0.456;
+    cov_a = 0.378;
+    cov_r = 0.213;
+    cov_a2 = 0.215;
     
-        arbiNum = num - 1;
+end
 
-        %-- Mobility Model Prediction(Estimation) Step
-        x(1, 1) = predictedData(arbiNum, 1) + time*mobilityArray(num, 6)*cos(mobilityArray(arbiNum, 5) * pi/180);
-        x(2, 1) = predictedData(arbiNum, 2) + time*mobilityArray(num, 6)*sin(mobilityArray(arbiNum, 5) * pi/180);
-        x(3, 1) = 0;
-        xH = zeros(3,1);
-        xH(1,1) = predictedData(arbiNum, 1);
-        xH(2,1) = predictedData(arbiNum, 2);
-        xH(3,1) = 0;
+pastNum = preNum - 1;
 
-        a = cos(mobilityArray(arbiNum, 5) * pi/180);
-        b = sin(mobilityArray(arbiNum, 5) * pi/180);
+pos_past = predictedData(pastNum, :);
+pos_Data = zeros(20,1);
+pos_Predict = zeros(20,1); % A*x
 
-        A = Ajacob(mobilityArray, num);
-        
-        Q = [time^2*a^2*cov_v^2 time^2*a*b*cov_v^2 0; time^2*a*b*cov_v^2 (time*b*cov_a)^2 0; 0 0 cov_a^2];
+pos_Observe = zeros(18, 1); % z(t)
+pos_Estimated = zeros(20,1);
 
-        Pp = A*P*A' + Q;
 
-        %-- Observaton Model Correction Step
-        H_x = observationArray(num,3); % position x
-        H_y = observationArray(num,4); % position y
-        relativeDis = sqrt((x(1,1) - H_x)^2 + (x(2,1) - H_y)^2);
-        relativeAng = atan2((H_y-x(2,1)),(H_x-x(1,1)));
-        relativeAng = relativeAng * 180/pi; 
 
-        H = Hjacob(H_x,H_y,mobilityArray, num,x, relativeDis);
 
-        z(1 ,1) = (cov_r)^2*(cos(relativeAng))^2 + relativeDis^2*cov_a2^2*(sin(relativeAng))^2;
-        z(2 ,1) = (cov_r)^2*(sin(relativeAng))^2 + relativeDis^2*cov_a2^2*(cos(relativeAng))^2;
-        %z(3, 1) = 0;
-        
-        R = [cov_r^2 0; 0 cov_a2^2];
-        K = Pp*H'*inv(H*Pp*H' + R);
-        xp = x;
-        HH = H*xH;
-        HHH = [HH(1,1);H(2,1);0];
-        xp(3,:) = [];
-        
-        newX = xp + K'*(z - HHH); % Correction X
-        P = Pp-K*H*Pp;
+%----------- Prediction Step
+pos_Predict(1, 1) = pos_past(1,1) + time*mobilityArray1(preNum, 6)*cos(mobilityArray1(pastNum, 5));
+pos_Predict(1, 2) = pos_past(1,2) + time*mobilityArray1(preNum, 6)*sin(mobilityArray1(pastNum, 5));
+A1 = Ajacob(mobilityArray1, preNum);
 
-        pos_x = newX(1);
-        pos_y = newX(2);  
-        distance = relativeDis;
-        
+pos_Predict(1, 3) = pos_past(1,3) + time*mobilityArray2(preNum, 6)*cos(mobilityArray2(pastNum, 5));
+pos_Predict(1, 4) = pos_past(1,4) + time*mobilityArray2(preNum, 6)*sin(mobilityArray2(pastNum, 5));
+A2 = Ajacob(mobilityArray2, preNum);
 
+pos_Predict(1, 5) = pos_past(1,5) + time*mobilityArray3(preNum, 6)*cos(mobilityArray3(pastNum, 5));
+pos_Predict(1, 6) = pos_past(1,6) + time*mobilityArray3(preNum, 6)*sin(mobilityArray3(pastNum, 5));
+A3 = Ajacob(mobilityArray3, preNum);
+
+pos_Predict(1, 7) = pos_past(1,7) + time*mobilityArray4(preNum, 6)*cos(mobilityArray4(pastNum, 5));
+pos_Predict(1, 8) = pos_past(1,8) + time*mobilityArray4(preNum, 6)*sin(mobilityArray4(pastNum, 5));
+A4 = Ajacob(mobilityArray4, preNum);
+
+pos_Predict(1, 9) = pos_past(1,9) + time*mobilityArray5(preNum, 6)*cos(mobilityArray5(pastNum, 5));
+pos_Predict(1, 10) = pos_past(1,10) + time*mobilityArray5(preNum, 6)*sin(mobilityArray5(pastNum, 5));
+A5 = Ajacob(mobilityArray5, preNum);
+
+pos_Predict(1, 11) = pos_past(1,11) + time*mobilityArray6(preNum, 6)*cos(mobilityArray6(pastNum, 5));
+pos_Predict(1, 12) = pos_past(1,12) + time*mobilityArray6(preNum, 6)*sin(mobilityArray6(pastNum, 5));
+A6 = Ajacob(mobilityArray6, preNum);
+
+pos_Predict(1, 13) = pos_past(1,13) + time*mobilityArray7(preNum, 6)*cos(mobilityArray7(pastNum, 5));
+pos_Predict(1, 14) = pos_past(1,14) + time*mobilityArray7(preNum, 6)*sin(mobilityArray7(pastNum, 5));
+A7 = Ajacob(mobilityArray7, preNum);
+
+pos_Predict(1, 15) = pos_past(1,15) + time*mobilityArray8(preNum, 6)*cos(mobilityArray8(pastNum, 5));
+pos_Predict(1, 16) = pos_past(1,16) + time*mobilityArray8(preNum, 6)*sin(mobilityArray8(pastNum, 5));
+A8 = Ajacob(mobilityArray8, preNum);
+
+pos_Predict(1, 17) = pos_past(1,17) + time*mobilityArray9(preNum, 6)*cos(mobilityArray9(pastNum, 5));
+pos_Predict(1, 18) = pos_past(1,18) + time*mobilityArray9(preNum, 6)*sin(mobilityArray9(pastNum, 5));
+A9 = Ajacob(mobilityArray9, preNum);
+
+pos_Predict(1, 19) = pos_past(1,19) + time*mobilityArray10(preNum, 6)*cos(mobilityArray10(pastNum, 5));
+pos_Predict(1, 20) = pos_past(1,20) + time*mobilityArray10(preNum, 6)*sin(mobilityArray10(pastNum, 5));
+A10 = Ajacob(mobilityArray10, preNum);
+
+%----------- Observation & Correction Step
+
+relativeDistance = zeros(9, 1);
+relativeAng = zeros(9,1);
+   
+% if id_1 observe the others
+
+observeCount = 1;
+
+for i = 1 : 2 : 19
+    A_x = realData(preNum, i) + randn*3;
+    A_y = realData(preNum, i + 1) + randn*3;
+
+    for k = 1 : 2 : 19
+        if i ~= k
+            H_x = realData(preNum,i) + randn*3;
+            H_y = realData(preNum,i + 1) + randn*3;
+            relativeDistance(observeCount, 1) = sqrt((A_x- H_x)^2 + (A_y- H_y)^2);
+            relativeAng(observeCount,1) = atan2((A_x - H_y),(A_y - H_x));
+            observeCount = observeCount + 1;
+        end 
     end
+    
+
+    %Calculation 
+    observeCount = 1;
+    for k = 1 : 2 : 17
+
+        pos_Observe(k,1) = A_x + relativeDis(observeCount,1)*cos(relativeAng(observeCount,1));
+        pos_Observe(k+1,1) = A_y + relativeDis(observeCount,1)*sin(relativeAng(observeCount,1));
+        observeCount = observeCount + 1;
+    end
+    
+
+    
+    pos_Observe = zeros(18, 1); % Initalize
+end
+
+
+
 end
 
 function A = Ajacob(mobilityArray, number)
@@ -175,20 +304,3 @@ function A = Ajacob(mobilityArray, number)
     A(3,3) = 1;
 
 end
-
-function H = Hjacob(H_x,H_y,Xsaved, number,x, distance)
-
-    theta_check = Xsaved(number, 5);
-
-    H1_dx = -(H_x - x(1) - distance*cos(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
-    H1_dy = -(H_y - x(2) - distance*sin(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
-    dg1_dtheta = distance*(sin(theta_check)*(H_x - x(1) - distance*cos(theta_check)) - cos(theta_check)*(H_y - x(2) - distance*sin(theta_check)))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
-            
-    H2_dx = -(H_y - x(2) - distance*sin(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
-    H2_dy = -(H_x - x(1) - distance*cos(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2)^(1/2);
-    dg2_dtheta = -distance*sin(theta_check)*(H_y - x(2) - distance*sin(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2) - distance*cos(theta_check)*(H_x - x(1) - distance*cos(theta_check))/((H_x - x(1) - distance*cos(theta_check))^2 + (H_y - x(2) - distance*sin(theta_check))^2) - 1;
-            
-    H = [H1_dx H1_dy dg1_dtheta ; H2_dx H2_dy dg2_dtheta];
-
-end
-
