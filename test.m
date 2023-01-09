@@ -1,6 +1,6 @@
-count = 5;
+count = 0;
 
-for i = 1 : 2 : 19 & j = 1 : 9
-    
-j
+for i = 1 : 100 : 59900
+    count = count + 1
+
 end
