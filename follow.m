@@ -130,7 +130,7 @@ for i = 1 : 100 : count % count => 59900
     
     % gap of sequence time is 0.01, 100 gap is 1 so time is 1[s]
     if i == 1
-        predictedData(preNum, :) = 100;
+        predictedData(preNum, :) = 100; % initialize all position 100 (x,y)
     end
 
     if i ~= 1
@@ -159,8 +159,8 @@ error3 = immse(predictedData(:,3),realData(:,3))
 final_predict = array2table(predictedData,"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y","id9_x","id9_y","id10_x","id10_y"]);
 final_real = array2table(realData,"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y","id9_x","id9_y","id10_x","id10_y"]);
 
-writetable(final_predict,'predictedData1.csv')
-writetable(final_real,'realData1.csv')
+writetable(final_predict,'predictedData10.csv')
+writetable(final_real,'realData10.csv')
 
 %-------------- Kalman Filter Algorithm
 
@@ -208,6 +208,8 @@ if isempty(firstRun)
     P8 = diag([1,1,0.1]);
     P9 = diag([1,1,0.1]);
     P10 = diag([1,1,0.1]);
+
+    
 
     cov_v = 0.456;
     cov_a = 0.378;
@@ -321,6 +323,9 @@ b = sin(mobilityArray10(pastNum,5));
 Q10 = [time^2*a^2*cov_v^2 time^2*a*b*cov_v^2 0; time^2*a*b*cov_v^2 (time*b*cov_a)^2 0; 0 0 0];
 Pp10 = A10*P10*A10' + Q10;
 
+
+
+
 %----------- Observation & Correction Step
 
 relativeDistance = zeros(9, 1);
@@ -330,18 +335,21 @@ relativeAng = zeros(9,1);
 
 observeCount = 1;
 
+
+%Internal Observation 
+n_ii = 10000*randn;
+pos_Predict(:,1) = pos_Predict(:,1) + n_ii/100; %(x,y 100 * 100 -> 10000)
 for i = 1 : 2 : 19
-    A_x = realData(preNum, i) + randn*3;
-    A_y = realData(preNum, i + 1) + randn*3;
 
-
-
+    A_x = realData(preNum, i);
+    A_y = realData(preNum, i + 1);
     for k = 1 : 2 : 19
         if i ~= k
-            H_x = realData(preNum,i) + randn*3;
-            H_y = realData(preNum,i + 1) + randn*3;
-            relativeDistance(observeCount, 1) = sqrt((A_x- H_x)^2 + (A_y- H_y)^2);
-            relativeAng(observeCount,1) = atan2((A_y - H_y),(A_x - H_x));
+            H_x = realData(preNum,i);
+            H_y = realData(preNum,i + 1);
+            %External Observation
+            relativeDistance(observeCount, 1) = sqrt((A_x- H_x)^2 + (A_y- H_y)^2) + randn*25; % relDis Noise n_d
+            relativeAng(observeCount,1) = atan2((A_y - H_y),(A_x - H_x)) + randn*1*pi/180; % relAng Noise n_phi
             observeCount = observeCount + 1;
         end 
     end
@@ -368,7 +376,7 @@ for i = 1 : 2 : 19
     z(2,1) = arbi_y;
     z(3,1) = 0;
 
-    R = 10;
+    R = 20;
     %id = 1
     if i == 1
         K1 = Pp1*H*inv(H*Pp1*H' + R);
