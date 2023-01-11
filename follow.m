@@ -159,8 +159,8 @@ error3 = immse(predictedData(:,3),realData(:,3))
 final_predict = array2table(predictedData,"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y","id9_x","id9_y","id10_x","id10_y"]);
 final_real = array2table(realData,"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y","id9_x","id9_y","id10_x","id10_y"]);
 
-writetable(final_predict,'predictedData10.csv')
-writetable(final_real,'realData10.csv')
+writetable(final_predict,'predictedData1.csv')
+writetable(final_real,'realData1.csv')
 
 %-------------- Kalman Filter Algorithm
 
@@ -337,8 +337,8 @@ observeCount = 1;
 
 
 %Internal Observation 
-n_ii = 10000*randn;
-pos_Predict(:,1) = pos_Predict(:,1) + n_ii/100; %(x,y 100 * 100 -> 10000)
+n_ii = 30*randn;
+pos_Predict(:,1) = pos_Predict(:,1) + n_ii; %(x,y)
 for i = 1 : 2 : 19
 
     A_x = realData(preNum, i);
