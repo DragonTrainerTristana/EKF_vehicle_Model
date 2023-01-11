@@ -172,13 +172,14 @@ scatter(realData(:,5), realData(:,6))
 title('realData')
 %}
 error1 = immse(predictedData(:,2),realData(:,2))
-error3 = immse(predictedData(:,3),realData(:,3))
+error3 = immse(predictedData(:,4),realData(:,4))
+error5 = immse(predictedData(:,6),realData(:,6))
 
-final_predict = array2table(predictedData(:,:),"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y","id9_x","id9_y","id10_x","id10_y","id11_x","id11_y","id12_x","id12_y"]);
-final_real = array2table(realData(:,:),"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y","id9_x","id9_y","id10_x","id10_y","id11_x","id11_y","id12_x","id12_y"]);
+final_predict = array2table(predictedData(:,1:16),"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y"]);
+final_real = array2table(realData(:,1:16),"VariableNames",["id1_x","id1_y","id2_x","id2_y","id3_x","id3_y","id4_x","id4_y","id5_x","id5_y","id6_x","id6_y","id7_x","id7_y","id8_x","id8_y"]);
 
-writetable(final_predict,'predictedData10.csv')
-writetable(final_real,'realData10.csv')
+writetable(final_predict,'predictedData16.csv')
+writetable(final_real,'realData16.csv')
 
 %-------------- Kalman Filter Algorithm
 
@@ -372,11 +373,11 @@ observeCount = 1;
 %Internal Observation 
 n_ii = 30*randn;
 pos_Predict(:,1) = pos_Predict(:,1) + n_ii; %(x,y)
-for i = 1 : 2 : 23
+for i = 1 : 2 : 15
 
     A_x = realData(preNum, i);
     A_y = realData(preNum, i + 1);
-    for k = 1 : 2 : 23
+    for k = 1 : 2 : 15
         if i ~= k
             H_x = realData(preNum,i);
             H_y = realData(preNum,i + 1);
@@ -392,7 +393,7 @@ for i = 1 : 2 : 23
 
     %Calculation 
     observeCount = 1;
-    for k = 1 : 2 : 22
+    for k = 1 : 2 : 14
 
         pos_Observe(k,1) = A_x + relativeDistance(observeCount,1)*cos(relativeAng(observeCount,1));
         arbi_x = arbi_x + pos_Observe(k,1);
@@ -402,8 +403,8 @@ for i = 1 : 2 : 23
     end
     z = zeros(3,1);
     newX = zeros(3,1);
-    arbi_x = arbi_x /11;
-    arbi_y = arbi_y /11;
+    arbi_x = arbi_x /7;
+    arbi_y = arbi_y /7;
 
     z(1,1) = arbi_x;
     z(2,1) = arbi_y;
